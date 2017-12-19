@@ -1,4 +1,4 @@
-from pearson import data, recommend as re
+from intellij import data, recommend as re
 
 # 已有购买记录
 print('两用户相关度(0-1)：\n', re.sim_pearson(data.prefs, 'cxd', 'syq'))
@@ -15,4 +15,13 @@ print('与【new】最相关的用户(相关度，用户名)：\n', re.topMatch(
 top1 = re.topMatch(data.user, 'new', 1, similarity=re.sim_distance)[0]
 print(top1[1])
 print('为【new】推荐的产品：\n', re.getRecommend(data.prefs, 'new', re.sim_distance))
+
+prefs = re.loadMovielens()
+movies = re.transformPrefs(prefs)
+print(re.getRecommend(movies,'Wrong Cops (2013)')[0:30])
+print(re.getRecommend(prefs,'87')[0:30])
+
+# 基于产品的协作过滤
+itemsdict = re.calculateItems(prefs) #后台运行，非常慢
+print(re.getRecommendedItems(prefs,itemsdict,'87')[0:30]) #非常快，比基于用户的协作过滤快
 

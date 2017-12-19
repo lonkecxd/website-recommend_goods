@@ -1,6 +1,6 @@
 import math
 
-from pearson import data
+from intellij import data
 
 
 # 用户相关度算法-皮尔逊，结果越接近1越相关。
@@ -53,7 +53,7 @@ def topMatch(prefs,person,n=3,similarity=sim_pearson):
     scores.reverse()
     return scores[0:n]
 
-# 获得金融产品推荐
+# 获得金融产品推荐（基于用户的协作型过滤）
 def getRecommend(prefs, person, similarity=sim_pearson, user=data.user, n=3):
     totals = {}
     simSums = {}
@@ -87,3 +87,47 @@ def transformPrefs(prefs):
             result[item][person]=prefs[person][item]
 
     return result
+
+def loadMovielens(path='./data/csv'):
+    movies = {}
+    for line in open(path+'/movies.csv'):
+        (id,title) = line.split(',')[0:2]
+        movies[id] = title
+
+    prefs = {}
+    for line in open(path+'/ratings.csv'):
+        (user,mid,rating,timstamp) = line.split(',')
+        prefs.setdefault(user,{})
+        prefs[user][movies[mid]] = float(rating)
+    return prefs
+
+# 获得产品的相关产品字典
+def calculateItems(prefs,n=10):
+    result = {}
+    itemprefs = transformPrefs(prefs)
+    c = 0
+    for item in itemprefs:
+        c+=1
+        if(c%100==0):
+            print(c,' / ',len(itemprefs))
+        scores = topMatch(itemprefs,item,n=n,similarity=sim_distance)
+        result[item] = scores
+    return result
+
+#获得产品推荐（基于用户的协作型过滤）
+def getRecommendedItems(prefs,itemsdict,user):
+    userRatings = prefs[user]
+    scores = {}
+    totalSim = {}
+    for (item,rating) in userRatings.items():
+        for (similarity,item2) in itemsdict[item]:
+            if(item2 in userRatings):continue
+            scores.setdefault(item2,0)
+            scores[item2]+=similarity*rating
+
+            totalSim.setdefault(item2,0)
+            totalSim[item2]+=similarity
+    rankings = [[(score/totalSim[item],item) for item,score in scores.items()]]
+    rankings.sort()
+    rankings.reverse()
+    return rankings
